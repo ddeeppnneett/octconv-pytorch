@@ -1,4 +1,4 @@
-import numpy as np
+#import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,7 +7,7 @@ import torch.nn.functional as F
 class OctConv(nn.Module):
     def __init__(self, ch_in, ch_out, kernel_size, stride=1, alphas=(0.5, 0.5)):
         super(OctConv, self).__init__()
-        self.alpha_in, self.alpha_out = alphas
+        self.alpha_in, self.alpha_out = torch.tensor(alphas)
         assert 0 <= self.alpha_in <= 1 and 0 <= self.alpha_in <= 1, "Alphas must be in interval [0, 1]"
 
         # CH IN
@@ -60,17 +60,24 @@ class OctConv(nn.Module):
             fmap_size = hf_output.shape[-1] // 2
             hf_output = hf_output.reshape(-1, 4 * self.ch_out_hf, fmap_size, fmap_size)
             output = torch.cat([hf_output, lf_output], dim=1)  # cat over channel dim
-        elif np.isclose(self.alpha_out, 1., atol=1e-8):
+        #elif np.isclose(self.alpha_out, 1., atol=1e-8):
+        elif torch.allclose(self.alpha_out, torch.ones(1),rtol=1e-05, atol=1e-08)
             # if only low req (alpha_out = 1.)
             output = lf_output
-        elif np.isclose(self.alpha_out, 0., atol=1e-8):
+        #elif np.isclose(self.alpha_out, 0., atol=1e-8):
+        elif torch.allclose(self.alpha_out, torch.zeros(1),rtol=1e-05, atol=1e-08)
             # if only high freq (alpha_out = 0.)
             output = hf_output
         return output
 
 
-oc = OctConv(ch_in=3, ch_out=3, kernel_size=3, alphas=(0., 0.5))
-oc1 = OctConv(ch_in=3, ch_out=10, kernel_size=7, alphas=(0.5, 0.8))
-oc2 = OctConv(ch_in=10, ch_out=1, kernel_size=3, alphas=(0.8, 0.))
-out = oc2(oc1(oc(torch.randn(2, 3, 32, 32))))
-print(out.shape)
+if __name__ == "__main__":
+    oc = OctConv(ch_in=3, ch_out=3, kernel_size=3, alphas=(0., 0.5))
+    oc1 = OctConv(ch_in=3, ch_out=10, kernel_size=7, alphas=(0.5, 0.8))
+    oc2 = OctConv(ch_in=10, ch_out=1, kernel_size=3, alphas=(0.8, 0.))
+    out = oc2(oc1(oc(torch.randn(2, 3, 32, 32))))
+    print(out.shape)
+    
+    
+########end of code############
+
