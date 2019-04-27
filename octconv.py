@@ -61,13 +61,15 @@ class OctConv(nn.Module):
             hf_output = hf_output.reshape(-1, 4 * self.ch_out_hf, fmap_size, fmap_size)
             output = torch.cat([hf_output, lf_output], dim=1)  # cat over channel dim
         #elif np.isclose(self.alpha_out, 1., atol=1e-8):
-        elif torch.allclose(self.alpha_out, torch.ones(1),rtol=1e-05, atol=1e-08)
+        elif torch.allclose(self.alpha_out, torch.ones(1),rtol=1e-05, atol=1e-08):
             # if only low req (alpha_out = 1.)
             output = lf_output
         #elif np.isclose(self.alpha_out, 0., atol=1e-8):
-        elif torch.allclose(self.alpha_out, torch.zeros(1),rtol=1e-05, atol=1e-08)
+        elif torch.allclose(self.alpha_out, torch.zeros(1),rtol=1e-05, atol=1e-08):
             # if only high freq (alpha_out = 0.)
             output = hf_output
+        else:
+            raise ValueError('OctConv::alpha_out facing the atol problem with torch.allclose...')
         return output
 
 
