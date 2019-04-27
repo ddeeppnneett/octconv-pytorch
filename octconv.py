@@ -8,14 +8,14 @@ class OctConv(nn.Module):
     def __init__(self, ch_in, ch_out, kernel_size, stride=1, alphas=(0.5, 0.5)):
         super(OctConv, self).__init__()
         self.alpha_in, self.alpha_out = torch.tensor(alphas)
-        assert 0 <= self.alpha_in <= 1 and 0 <= self.alpha_in <= 1, "Alphas must be in interval [0, 1]"
+        assert 0. <= self.alpha_in <= 1. and 0. <= self.alpha_in <= 1., "Alphas must be in interval [0, 1]"
 
         # CH IN
-        self.ch_in_hf = int((1 - self.alpha_in) * ch_in)
+        self.ch_in_hf = int((1. - self.alpha_in) * ch_in)
         self.ch_in_lf = ch_in - self.ch_in_hf
 
         # CH OUT
-        self.ch_out_hf = int((1 - self.alpha_out) * ch_out)
+        self.ch_out_hf = int((1. - self.alpha_out) * ch_out)
         self.ch_out_lf = ch_out - self.ch_out_hf
 
         # FILTERS
@@ -39,23 +39,23 @@ class OctConv(nn.Module):
             lf_input = input[:, self.ch_in_hf * 4:, ...]
 
         HtoH = HtoL = LtoL = LtoH = 0.
-        if self.alpha_in < 1:
+        if self.alpha_in < 1.:
             # if alpha < 1 there is high freq component
-            if self.ch_out_hf > 0:
+            if self.ch_out_hf > 0.:
                 HtoH = F.conv2d(hf_input, self.wHtoH, padding=self.padding)
-            if self.ch_out_lf > 0:
+            if self.ch_out_lf > 0.:
                 HtoL = F.conv2d(F.avg_pool2d(hf_input, 2), self.wHtoL, padding=self.padding)
-        if self.alpha_in > 0:
+        if self.alpha_in > 0.:
             # if alpha > 0 there is low freq component
-            if self.ch_out_hf > 0:
+            if self.ch_out_hf > 0.:
                 LtoH = F.interpolate(F.conv2d(lf_input, self.wLtoH, padding=self.padding),
                                      scale_factor=2, mode='nearest')
-            if self.ch_out_lf > 0:
+            if self.ch_out_lf > 0.:
                 LtoL = F.conv2d(lf_input, self.wLtoL, padding=self.padding)
 
         hf_output = HtoH + LtoH
         lf_output = LtoL + HtoL
-        if 0 < self.alpha_out < 1:
+        if 0. < self.alpha_out < 1.:
             # if alpha in (0, 1)
             fmap_size = hf_output.shape[-1] // 2
             hf_output = hf_output.reshape(-1, 4 * self.ch_out_hf, fmap_size, fmap_size)
